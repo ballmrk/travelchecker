@@ -19,19 +19,26 @@
 
     <header>
         <h1>Time for Vegas?</h1>
-        <h2 class="subtitle">Find the best time to escape the cold</h2>
+        <h2 class="subtitle">Find affordable days to leave Minnesota before the weather shit hits the fan.</h2>
+        
     </header>
+
+    <section class="highlighted-day">
+        <h2 class="section-title">Your Best Travel Day</h2>
+        <p class="best-day-explanation">
+            Out of the next 7 days, <strong id="best-day-date"></strong> looks like the top choice for heading to Vegas! 
+            This day offers the best combination of affordable flights and warmer weather, making it the winner.
+        </p>
+    </section>
 
     <div class="container">
         <!-- LEFT COLUMN -->
         <div class="left-column">
-        
-
-            
-
             <div class="card" id="score-overview-card">
                 <h2>Score Overview</h2>
-                <p class="small-note">Higher scores mean better conditions for travel. The gauge shows an overall score, and below is the breakdown of how we calculated it.</p>
+                <p class="small-note">
+                    Higher scores mean better conditions for travel. The gauge shows the overall score, and below is the breakdown of how it’s calculated.
+                </p>
                 <div id="gauge_div"></div>
                 <h3>Score Breakdown</h3>
                 <ul id="breakdown-list"></ul>
@@ -42,7 +49,7 @@
             <div class="card" id="multi-day-analysis">
                 <h2>Multiple-Day Analysis</h2>
                 <p>Scores for the next 7 days (starting tomorrow):</p>
-                <p class="chart-instruction"><em>Click on a point on the line graph to see that day's score breakdown and flight details.</em></p>
+                <p class="chart-instruction"><em>Click on a point on the line graph to see that day’s score breakdown and flight details.</em></p>
                 <div id="chart_div"></div>
                 <div id="day-breakdown"></div>
             </div>
@@ -52,6 +59,7 @@
         <div class="right-column">
             <div class="card" id="results"></div>
         </div>
+
         <!-- Subscription Card -->
         <div class="card" id="subscribe-card">
             <h2>Email Alerts</h2>

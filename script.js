@@ -60,14 +60,14 @@ async function fetchDataAndUpdateUI() {
         // Hide loading overlay
         if (loadingOverlay) loadingOverlay.style.display = 'none';
 
-        // Display score breakdown
+        // Display score breakdown and other info
         displayScore(bestDay, vegasForecast, minnesotaForecast);
         drawMultiDayChart(dayScores);
 
     } catch (error) {
         console.error(error);
         if (loadingOverlay) loadingOverlay.style.display = 'none';
-        // You can show an error message to user
+        // Show an error message to user
         const alertMessages = document.getElementById('alert-messages');
         if (alertMessages) {
             alertMessages.innerHTML = `<div style="color:red;">Error: ${error.message}</div>`;
@@ -79,6 +79,12 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
     const {score, flightPrice, flightDetails, alternativeFlights, breakdown} = bestDay;
     const chosenDate = bestDay.date;
 
+    // UPDATED: Set the best-day-date element to highlight chosen day
+    const bestDayDateElem = document.getElementById('best-day-date');
+    if (bestDayDateElem) {
+        bestDayDateElem.textContent = chosenDate;
+    }
+
     // Alerts if any
     const alertContainer = document.getElementById('alert-messages');
     if (alertContainer) {
@@ -86,34 +92,37 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
         let alerts = [];
         let mnMaxSnow = Math.max(...minnesotaForecast.map(d => d.snow));
         if (mnMaxSnow > 6) {
-            alerts.push("Severe Weather Alert: Heavy snowfall expected!");
+            alerts.push("Severe Weather Alert: Heavy snowfall expected in Minnesota!");
         }
         if (flightPrice !== null && flightPrice > 500) {
-            alerts.push("Expensive Flight Alert: Flights are over $500!");
+            alerts.push("Expensive Flight Alert: Flights cost more than $500!");
         }
         if (alerts.length > 0) {
             alertContainer.innerHTML = alerts.map(msg => `<div>${msg}</div>`).join('');
         }
     }
 
+    // UPDATED: Friendlier Score Breakdown
     const breakdownList = document.getElementById('breakdown-list');
     if (breakdownList) {
         let breakdownHTML = `
-            <li>Flight Price Points: ${breakdown.flightPoints.toFixed(2)}</li>
-            <li>Cold Weather (MN Windchill) Points: ${breakdown.coldPoints.toFixed(2)}</li>
-            <li>Vegas Weather Points: ${breakdown.vegasPoints.toFixed(2)}</li>
-            <li>Snow Event Points: ${breakdown.snowPoints.toFixed(2)}</li>
-            <li>Extra Snowy Days Points: ${breakdown.extraSnowPoints.toFixed(2)}</li>
+            <li><strong>Airfare Value:</strong> ${breakdown.flightPoints.toFixed(2)} – Reflects how affordable flights are. Higher is better.</li>
+            <li><strong>MN Cold Weather Penalty:</strong> ${breakdown.coldPoints.toFixed(2)} – Negative means colder Minnesota weather, adding incentive to leave.</li>
+            <li><strong>Vegas Weather Bonus:</strong> ${breakdown.vegasPoints.toFixed(2)} – Positive values mean nicer weather in Vegas.</li>
+            <li><strong>Snow Event Adjustment:</strong> ${breakdown.snowPoints.toFixed(2)} – Points added if snow or poor conditions make leaving MN more appealing.</li>
+            <li><strong>Extra Snowy Days Bonus:</strong> ${breakdown.extraSnowPoints.toFixed(2)} – Additional points for especially snowy conditions.</li>
         `;
         if (breakdown.severeBonus && breakdown.severeBonus > 0) {
-            breakdownHTML += `<li>Severe Weather Bonus: ${breakdown.severeBonus.toFixed(2)}</li>`;
+            breakdownHTML += `<li><strong>Severe Weather Bonus:</strong> ${breakdown.severeBonus.toFixed(2)}</li>`;
         }
-        breakdownHTML += `<li><strong>Total:</strong> ${score.toFixed(2)}</li>`;
+        breakdownHTML += `<li><strong>Total Score:</strong> ${score.toFixed(2)}</li>`;
         breakdownList.innerHTML = breakdownHTML;
     }
 
     const results = document.getElementById('results');
     let flightLink = `https://www.google.com/travel/flights?q=Flights%20from%20MSP%20to%20LAS%20on%20${encodeURIComponent(chosenDate)}`;
+
+    // Create Vegas forecast rows
     const vegasRows = vegasForecast.slice(1,8).map(d => {
         let highlightClass = d.date === chosenDate ? 'highlight-row' : '';
         let rainText = d.rain > 0 ? d.rain.toFixed(2) + " in rain" : "";
@@ -126,6 +135,7 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
         </tr>`;
     }).join('');
 
+    // Create MN forecast rows
     const mnRows = minnesotaForecast.slice(1,8).map(d => {
         let highlightClass = d.date === chosenDate ? 'highlight-row' : '';
         let snowText = d.snow > 0 ? d.snow.toFixed(2) + " in snow" : "";
@@ -142,13 +152,15 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
 
     let flightInfoHTML = "";
     if (flightDetails) {
+        // UPDATED: More conversational flight info
         flightInfoHTML = `
-            <p><strong>Selected One-Way Flight:</strong><br>
-            <li>Departure (${flightDetails.departureTime})<br>
-            <li>Airline: ${flightDetails.carrier}<br>
-            <li>Flight #: ${flightDetails.flightNumber}<br>
-            <li>Departs: ${flightDetails.departureTime}<br>
-            <li>Arrives: ${flightDetails.arrivalTime}</p>
+            <p><strong>Selected One-Way Flight:</strong></p>
+            <ul>
+              <li><strong>Airline:</strong> ${flightDetails.carrier}</li>
+              <li><strong>Flight #:</strong> ${flightDetails.flightNumber}</li>
+              <li><strong>Departs:</strong> ${flightDetails.departureTime}</li>
+              <li><strong>Arrives:</strong> ${flightDetails.arrivalTime}</li>
+            </ul>
         `;
     }
 
@@ -161,11 +173,12 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
         alternativesHTML += `</ul>`;
     }
 
+    // UPDATED: More friendly explanation
     if (results) {
         results.innerHTML = `
             <h2>Details for Best Day: ${chosenDate}</h2>
             <p><strong>Flight Price:</strong> ${flightPrice !== null ? '$' + flightPrice : 'No flights found'}<br>
-            <a href="${flightLink}" target="_blank">Check Flights for ${chosenDate}</a><br>
+            <a href="${flightLink}" target="_blank">Check Flights for ${chosenDate}</a></p>
 
             ${flightInfoHTML}
             ${alternativesHTML}
@@ -181,6 +194,7 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
             <tr><th>Date</th><th>Temp</th><th>Condition</th><th>Snow</th><th>Windchill</th></tr>
             ${mnRows}
             </table>
+            <p><em>Currently showing the best day within the next 7 days. I’m working on expanding this to show 10 or even 16 days soon!</em></p>
         `;
     }
 
@@ -226,7 +240,10 @@ function drawMultiDayChart(dayScores) {
             curveType: 'function',
             legend: { position: 'bottom' },
             width: 550,
-            height: 400
+            height: 400,
+            // UPDATED: Add point markers (little boxes) for each data point
+            pointSize: 7,
+            pointShape: 'square'
         };
 
         var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
@@ -244,16 +261,17 @@ function drawMultiDayChart(dayScores) {
 
 function showDayBreakdown(dayInfo) {
     const breakdown = dayInfo.breakdown;
+    // UPDATED: Friendlier breakdown labels here as well
     let breakdownHTML = `
         <h2>Score Breakdown for ${dayInfo.date}</h2>
         <ul>
-            <li>Flight Price Points: ${breakdown.flightPoints.toFixed(2)}</li>
-            <li>Cold Weather (MN Windchill) Points: ${breakdown.coldPoints.toFixed(2)}</li>
-            <li>Vegas Weather Points: ${breakdown.vegasPoints.toFixed(2)}</li>
-            <li>Snow Event Points: ${breakdown.snowPoints.toFixed(2)}</li>
-            <li>Extra Snowy Days Points: ${breakdown.extraSnowPoints.toFixed(2)}</li>
-            ${breakdown.severeBonus && breakdown.severeBonus > 0 ? `<li>Severe Weather Bonus: ${breakdown.severeBonus.toFixed(2)}</li>` : ''}
-            <li><strong>Total:</strong> ${dayInfo.score.toFixed(2)}</li>
+            <li><strong>Airfare Value:</strong> ${breakdown.flightPoints.toFixed(2)}</li>
+            <li><strong>MN Cold Weather Penalty:</strong> ${breakdown.coldPoints.toFixed(2)}</li>
+            <li><strong>Vegas Weather Bonus:</strong> ${breakdown.vegasPoints.toFixed(2)}</li>
+            <li><strong>Snow Event Adjustment:</strong> ${breakdown.snowPoints.toFixed(2)}</li>
+            <li><strong>Extra Snowy Days Bonus:</strong> ${breakdown.extraSnowPoints.toFixed(2)}</li>
+            ${breakdown.severeBonus && breakdown.severeBonus > 0 ? `<li><strong>Severe Weather Bonus:</strong> ${breakdown.severeBonus.toFixed(2)}</li>` : ''}
+            <li><strong>Total Score:</strong> ${dayInfo.score.toFixed(2)}</li>
         </ul>
 
         <p><strong>Flight Price:</strong> ${dayInfo.flightPrice !== null ? '$' + dayInfo.flightPrice.toFixed(2) : 'No flights found'}</p>
@@ -262,7 +280,10 @@ function showDayBreakdown(dayInfo) {
     if (dayInfo.flightDetails) {
         breakdownHTML += `
         <h3>Selected Flight</h3>
-        <p><strong>Departure (${dayInfo.flightDetails.departureDate}):</strong> ${dayInfo.flightDetails.carrier}, #${dayInfo.flightDetails.flightNumber}, Departs ${dayInfo.flightDetails.departureTime}, Arrives ${dayInfo.flightDetails.arrivalTime}</p>
+        <p><strong>Airline:</strong> ${dayInfo.flightDetails.carrier}<br>
+        <strong>Flight #:</strong> ${dayInfo.flightDetails.flightNumber}<br>
+        <strong>Departs:</strong> ${dayInfo.flightDetails.departureTime}<br>
+        <strong>Arrives:</strong> ${dayInfo.flightDetails.arrivalTime}</p>
         `;
     } else {
         breakdownHTML += `<p>No flight details available for this day.</p>`;
