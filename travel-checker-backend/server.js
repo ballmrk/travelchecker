@@ -235,16 +235,16 @@ async function findBestDay() {
     const tomorrow = new Date();
     // Start with tomorrow (1 day from now)
     tomorrow.setDate(tomorrow.getDate()+1);
-    // Normalize tomorrow to midnight to avoid date drift issues
+    // Normalize tomorrow to midnight
     tomorrow.setHours(0,0,0,0);
 
     const severeDay = findSevereWeatherDay(minnesotaForecast);
     let dayScores = [];
 
-    for (let i=1; i<=7; i++) {
+    // Loop from i=0 to i<7, i=0 = tomorrow
+    for (let i=0; i<7; i++) {
         const testDate = new Date(tomorrow.getTime());
-        testDate.setDate(tomorrow.getDate()+(i-1));
-        // Set testDate to midnight as well
+        testDate.setDate(tomorrow.getDate() + i);
         testDate.setHours(0,0,0,0);
 
         const dateISO = testDate.toISOString().split('T')[0];
@@ -255,23 +255,22 @@ async function findBestDay() {
         let chosenDetails = bestOneWay;
         let alternatives = outboundOffers.slice(1,3);
 
-        // Use the i-th index of the forecasts, which should correspond to tomorrow + (i-1) days.
-        // vegasForecast[0] = Today, vegasForecast[1] = Tomorrow, etc.
+        // Now i=0 is tomorrow, so use i+1 for forecasts
         let {score, breakdown} = computeScore(
             chosenFlightPrice,
-            vegasForecast[i],
-            minnesotaForecast[i],
-            (severeDay !== null && i < severeDay)
+            vegasForecast[i+1],
+            minnesotaForecast[i+1],
+            (severeDay !== null && (i+1) < severeDay)
         );
 
         dayScores.push({
-            date: testDate.toLocaleDateString('en-US',{timeZone:'America/Chicago'}),
+            date: dateISO,
             score,
             flightPrice: chosenFlightPrice,
             flightDetails: chosenDetails,
             alternativeFlights: alternatives,
             breakdown
-        });
+          });
     }
 
     let bestDay = dayScores.reduce((best, current) => current.score > best.score ? current : best, dayScores[0]);

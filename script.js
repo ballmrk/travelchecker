@@ -208,7 +208,7 @@ if (results) {
             <tr><th>Date</th><th>Temp</th><th>Condition</th><th>Snow</th><th>Windchill</th></tr>
             ${mnRows}
             </table>
-            <p><em>Currently showing the best day within the next 7 days. I’m working on expanding this to show 10 or even 16 days soon!</em></p>
+            <p><em>Currently showing the best day within the next 7 days.</em></p>
         `;
 }
 
