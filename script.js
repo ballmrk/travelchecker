@@ -144,11 +144,11 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
     if (flightDetails) {
         flightInfoHTML = `
             <p><strong>Selected One-Way Flight:</strong><br>
-            Departure (${flightDetails.departureTime})<br>
-            Airline: ${flightDetails.carrier}<br>
-            Flight #: ${flightDetails.flightNumber}<br>
-            Departs: ${flightDetails.departureTime}<br>
-            Arrives: ${flightDetails.arrivalTime}</p>
+            <li>Departure (${flightDetails.departureTime})<br>
+            <li>Airline: ${flightDetails.carrier}<br>
+            <li>Flight #: ${flightDetails.flightNumber}<br>
+            <li>Departs: ${flightDetails.departureTime}<br>
+            <li>Arrives: ${flightDetails.arrivalTime}</p>
         `;
     }
 
@@ -225,8 +225,8 @@ function drawMultiDayChart(dayScores) {
             title: 'Score Over the Next 7 Days',
             curveType: 'function',
             legend: { position: 'bottom' },
-            width: 400,
-            height: 300
+            width: 550,
+            height: 400
         };
 
         var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
