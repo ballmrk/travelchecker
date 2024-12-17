@@ -19,8 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const response = await fetch(`${backendUrl}/api/subscribe`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email})
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
                 });
 
                 if (!response.ok) {
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const result = await response.json();
                     subscribeMessage.textContent = result.message || "Subscribed successfully!";
                     subscribeMessage.style.color = 'green';
-                    emailInput.value = ''; 
+                    emailInput.value = '';
                 }
             } catch (err) {
                 console.error("Error subscribing:", err);
@@ -76,7 +76,7 @@ async function fetchDataAndUpdateUI() {
 }
 
 function displayScore(bestDay, vegasForecast, minnesotaForecast) {
-    const {score, flightPrice, flightDetails, alternativeFlights, breakdown} = bestDay;
+    const { score, flightPrice, flightDetails, alternativeFlights, breakdown } = bestDay;
     const chosenDate = bestDay.date;
 
     // UPDATED: Set the best-day-date element to highlight chosen day
@@ -105,55 +105,69 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
     // UPDATED: Friendlier Score Breakdown
     const breakdownList = document.getElementById('breakdown-list');
     if (breakdownList) {
-        let breakdownHTML = `
-            <li><strong>Airfare Value:</strong> ${breakdown.flightPoints.toFixed(2)} – Reflects how affordable flights are. Higher is better.</li>
-            <li><strong>MN Cold Weather Penalty:</strong> ${breakdown.coldPoints.toFixed(2)} – Negative means colder Minnesota weather, adding incentive to leave.</li>
-            <li><strong>Vegas Weather Bonus:</strong> ${breakdown.vegasPoints.toFixed(2)} – Positive values mean nicer weather in Vegas.</li>
-            <li><strong>Snow Event Adjustment:</strong> ${breakdown.snowPoints.toFixed(2)} – Points added if snow or poor conditions make leaving MN more appealing.</li>
-            <li><strong>Extra Snowy Days Bonus:</strong> ${breakdown.extraSnowPoints.toFixed(2)} – Additional points for especially snowy conditions.</li>
-        `;
-        if (breakdown.severeBonus && breakdown.severeBonus > 0) {
-            breakdownHTML += `<li><strong>Severe Weather Bonus:</strong> ${breakdown.severeBonus.toFixed(2)}</li>`;
+        let breakdownHTML = '';
+
+        // Always show Airfare Value, even if zero, since it's a key factor
+        breakdownHTML += `<li><strong>Airfare Value:</strong> ${breakdown.flightPoints.toFixed(2)} – Higher means cheaper, better flight deals.</li>`;
+
+        if (breakdown.coldPoints !== 0) {
+            breakdownHTML += `<li><strong>MN Cold Weather Bonus:</strong> ${breakdown.coldPoints.toFixed(2)} – Added if it’s cold in Minnesota, making a warm Vegas getaway more appealing.</li>`;
         }
+        if (breakdown.vegasPoints !== 0) {
+            breakdownHTML += `<li><strong>Vegas Weather Bonus:</strong> ${breakdown.vegasPoints.toFixed(2)} – Added if Vegas is especially warm and pleasant.</li>`;
+        }
+        if (breakdown.snowPoints !== 0) {
+            breakdownHTML += `<li><strong>Snow Event Adjustment:</strong> ${breakdown.snowPoints.toFixed(2)} – Added if snow or harsh conditions in MN make leaving more tempting.</li>`;
+        }
+        if (breakdown.extraSnowPoints !== 0) {
+            breakdownHTML += `<li><strong>Extra Snowy Days Bonus:</strong> ${breakdown.extraSnowPoints.toFixed(2)} – Extra points if conditions are unusually snowy.</li>`;
+        }
+        if (breakdown.severeBonus && breakdown.severeBonus > 0) {
+            breakdownHTML += `<li><strong>Severe Weather Bonus:</strong> ${breakdown.severeBonus.toFixed(2)} – Awarded if you leave before severe weather hits MN.</li>`;
+        }
+
+        // Always show the total score
         breakdownHTML += `<li><strong>Total Score:</strong> ${score.toFixed(2)}</li>`;
+
         breakdownList.innerHTML = breakdownHTML;
     }
 
-    const results = document.getElementById('results');
-    let flightLink = `https://www.google.com/travel/flights?q=Flights%20from%20MSP%20to%20LAS%20on%20${encodeURIComponent(chosenDate)}`;
 
-    // Create Vegas forecast rows
-    const vegasRows = vegasForecast.slice(1,8).map(d => {
-        let highlightClass = d.date === chosenDate ? 'highlight-row' : '';
-        let rainText = d.rain > 0 ? d.rain.toFixed(2) + " in rain" : "";
-        let iconUrl = weatherIconUrl(d.icon);
-        return `<tr class="${highlightClass}">
+const results = document.getElementById('results');
+let flightLink = `https://www.google.com/travel/flights?q=Flights%20from%20MSP%20to%20LAS%20on%20${encodeURIComponent(chosenDate)}`;
+
+// Create Vegas forecast rows
+const vegasRows = vegasForecast.slice(1, 8).map(d => {
+    let highlightClass = d.date === chosenDate ? 'highlight-row' : '';
+    let rainText = d.rain > 0 ? d.rain.toFixed(2) + " in rain" : "";
+    let iconUrl = weatherIconUrl(d.icon);
+    return `<tr class="${highlightClass}">
             <td>${d.date}</td>
             <td>${d.temp.toFixed(1)}°F</td>
             <td><img class="weather-icon" src="${iconUrl}" alt="${d.condition}"> ${d.condition}</td>
             <td>${rainText}</td>
         </tr>`;
-    }).join('');
+}).join('');
 
-    // Create MN forecast rows
-    const mnRows = minnesotaForecast.slice(1,8).map(d => {
-        let highlightClass = d.date === chosenDate ? 'highlight-row' : '';
-        let snowText = d.snow > 0 ? d.snow.toFixed(2) + " in snow" : "";
-        let iconUrl = weatherIconUrl(d.icon);
-        let wc = dailyWindchill(d.temp, d.wind_speed).toFixed(1) + "°F";
-        return `<tr class="${highlightClass}">
+// Create MN forecast rows
+const mnRows = minnesotaForecast.slice(1, 8).map(d => {
+    let highlightClass = d.date === chosenDate ? 'highlight-row' : '';
+    let snowText = d.snow > 0 ? d.snow.toFixed(2) + " in snow" : "";
+    let iconUrl = weatherIconUrl(d.icon);
+    let wc = dailyWindchill(d.temp, d.wind_speed).toFixed(1) + "°F";
+    return `<tr class="${highlightClass}">
             <td>${d.date}</td>
             <td>${d.temp.toFixed(1)}°F</td>
             <td><img class="weather-icon" src="${iconUrl}" alt="${d.condition}"> ${d.condition}</td>
             <td>${snowText}</td>
             <td>${wc}</td>
         </tr>`;
-    }).join('');
+}).join('');
 
-    let flightInfoHTML = "";
-    if (flightDetails) {
-        // UPDATED: More conversational flight info
-        flightInfoHTML = `
+let flightInfoHTML = "";
+if (flightDetails) {
+    // UPDATED: More conversational flight info
+    flightInfoHTML = `
             <p><strong>Selected One-Way Flight:</strong></p>
             <ul>
               <li><strong>Airline:</strong> ${flightDetails.carrier}</li>
@@ -162,20 +176,20 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
               <li><strong>Arrives:</strong> ${flightDetails.arrivalTime}</li>
             </ul>
         `;
-    }
+}
 
-    let alternativesHTML = "";
-    if (alternativeFlights && alternativeFlights.length > 0) {
-        alternativesHTML = `<h4>Alternative Flight Options:</h4><ul>`;
-        alternativeFlights.forEach(alt => {
-            alternativesHTML += `<li>$${alt.price} - ${alt.carrier}, Flight #${alt.flightNumber}, Departs ${alt.departureTime}, Arrives ${alt.arrivalTime}</li>`;
-        });
-        alternativesHTML += `</ul>`;
-    }
+let alternativesHTML = "";
+if (alternativeFlights && alternativeFlights.length > 0) {
+    alternativesHTML = `<h4>Alternative Flight Options:</h4><ul>`;
+    alternativeFlights.forEach(alt => {
+        alternativesHTML += `<li>$${alt.price} - ${alt.carrier}, Flight #${alt.flightNumber}, Departs ${alt.departureTime}, Arrives ${alt.arrivalTime}</li>`;
+    });
+    alternativesHTML += `</ul>`;
+}
 
-    // UPDATED: More friendly explanation
-    if (results) {
-        results.innerHTML = `
+// UPDATED: More friendly explanation
+if (results) {
+    results.innerHTML = `
             <h2>Details for Best Day: ${chosenDate}</h2>
             <p><strong>Flight Price:</strong> ${flightPrice !== null ? '$' + flightPrice : 'No flights found'}<br>
             <a href="${flightLink}" target="_blank">Check Flights for ${chosenDate}</a></p>
@@ -189,18 +203,18 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
             ${vegasRows}
             </table>
 
-            <h3>Minneapolis 7-Day Forecast (With Windchill)</h3>
+            <h3>Minneapolis 7-Day Forecast </h3>
             <table>
             <tr><th>Date</th><th>Temp</th><th>Condition</th><th>Snow</th><th>Windchill</th></tr>
             ${mnRows}
             </table>
             <p><em>Currently showing the best day within the next 7 days. I’m working on expanding this to show 10 or even 16 days soon!</em></p>
         `;
-    }
+}
 
-    // Load gauge and draw
-    google.charts.load('current', { 'packages': ['gauge'] });
-    google.charts.setOnLoadCallback(() => drawGauge(score));
+// Load gauge and draw
+google.charts.load('current', { 'packages': ['gauge'] });
+google.charts.setOnLoadCallback(() => drawGauge(score));
 }
 
 function drawGauge(score) {
@@ -213,8 +227,8 @@ function drawGauge(score) {
         width: 300,
         height: 200,
         redFrom: 0, redTo: 40,
-        yellowFrom:40, yellowTo:70,
-        greenFrom:70, greenTo:100,
+        yellowFrom: 40, yellowTo: 70,
+        greenFrom: 70, greenTo: 100,
         minorTicks: 5,
         max: 100,
         min: 0
@@ -225,8 +239,8 @@ function drawGauge(score) {
 }
 
 function drawMultiDayChart(dayScores) {
-    google.charts.load('current', {'packages':['corechart']});
-    google.charts.setOnLoadCallback(function() {
+    google.charts.load('current', { 'packages': ['corechart'] });
+    google.charts.setOnLoadCallback(function () {
         var data = new google.visualization.DataTable();
         data.addColumn('string', 'Date');
         data.addColumn('number', 'Score');
@@ -308,7 +322,7 @@ function weatherIconUrl(iconCode) {
 
 function dailyWindchill(tempF, windMph) {
     if (tempF <= 50 && windMph >= 3) {
-        return 35.74 + 0.6215*tempF - 35.75*(windMph**0.16) + 0.4275*tempF*(windMph**0.16);
+        return 35.74 + 0.6215 * tempF - 35.75 * (windMph ** 0.16) + 0.4275 * tempF * (windMph ** 0.16);
     } else {
         return tempF;
     }
