@@ -6,7 +6,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// User preferences and constants (moved from script.js)
+// User preferences and constants
 const IDEAL_FLIGHT_PRICE = 150;
 const MAX_FLIGHT_POINTS = 40;
 const MAX_SNOW_INCHES = 4;
@@ -34,8 +34,6 @@ let userPreferences = {
     snowWeight: 1.0,
     beforeSevereWeight: 1.0
 };
-
-// Functions moved from script.js:
 
 function dailyWindchill(tempF, windMph) {
     if (tempF <= 50 && windMph >= 3) {
@@ -235,14 +233,20 @@ async function findBestDay() {
     if (!vegasForecast || !minnesotaForecast) throw new Error("Failed to fetch weather data");
 
     const tomorrow = new Date();
+    // Start with tomorrow (1 day from now)
     tomorrow.setDate(tomorrow.getDate()+1);
-    const severeDay = findSevereWeatherDay(minnesotaForecast);
+    // Normalize tomorrow to midnight to avoid date drift issues
+    tomorrow.setHours(0,0,0,0);
 
+    const severeDay = findSevereWeatherDay(minnesotaForecast);
     let dayScores = [];
 
     for (let i=1; i<=7; i++) {
         const testDate = new Date(tomorrow.getTime());
         testDate.setDate(tomorrow.getDate()+(i-1));
+        // Set testDate to midnight as well
+        testDate.setHours(0,0,0,0);
+
         const dateISO = testDate.toISOString().split('T')[0];
 
         const outboundOffers = await getFilteredFlightOffers('MSP','LAS', dateISO);
@@ -251,6 +255,8 @@ async function findBestDay() {
         let chosenDetails = bestOneWay;
         let alternatives = outboundOffers.slice(1,3);
 
+        // Use the i-th index of the forecasts, which should correspond to tomorrow + (i-1) days.
+        // vegasForecast[0] = Today, vegasForecast[1] = Tomorrow, etc.
         let {score, breakdown} = computeScore(
             chosenFlightPrice,
             vegasForecast[i],
@@ -276,7 +282,6 @@ async function findBestDay() {
 app.get('/api/bestday', async (req, res) => {
   try {
     const {bestDay, dayScores, vegasForecast, minnesotaForecast} = await findBestDay();
-    // Return JSON for the frontend to display
     res.json({ bestDay, dayScores, vegasForecast, minnesotaForecast });
   } catch (e) {
     console.error(e);
@@ -287,7 +292,6 @@ app.get('/api/bestday', async (req, res) => {
 // Subscribe endpoint (for email)
 app.post('/api/subscribe', (req, res) => {
   const {email} = req.body;
-  // Not implemented: store email somewhere
   res.json({message: `Email ${email} subscribed. Persistence not implemented.`});
 });
 
