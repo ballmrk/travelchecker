@@ -241,9 +241,16 @@ function drawMultiDayChart(dayScores) {
             legend: { position: 'bottom' },
             width: 550,
             height: 400,
-            // UPDATED: Add point markers (little boxes) for each data point
+            // Ensure points are visible
+            pointsVisible: true,
+            // Set the size of the points
             pointSize: 7,
-            pointShape: 'square'
+            // Optional: Make the line a bit thicker
+            lineWidth: 2,
+            // Specify the shape of the points via the series option
+            series: {
+                0: { pointShape: 'square' }
+            }
         };
 
         var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
