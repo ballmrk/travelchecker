@@ -36,7 +36,7 @@ async function fetchDataAndUpdateUI() {
 
 function displayScore(bestDay, vegasForecast, minnesotaForecast) {
     const { score, flightPrice, flightDetails, alternativeFlights, breakdown } = bestDay;
-    const chosenDate = bestDay.date; // raw date (e.g. "2024-01-15") for comparisons
+    const chosenDate = bestDay.date; // raw date (e.g. "2024-01-15")
 
     // Format the chosenDate into a more Americanized format (e.g., "January 15, 2024")
     const dateObj = new Date(chosenDate);
@@ -100,9 +100,17 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
     const results = document.getElementById('results');
     let flightLink = `https://www.google.com/travel/flights?q=Flights%20from%20MSP%20to%20LAS%20on%20${encodeURIComponent(chosenDate)}`;
 
+    // Helper function to normalize date strings to YYYY-MM-DD to ensure consistent comparison
+    function normalizeDateString(dateStr) {
+        return dateStr.substring(0, 10); // Grabs 'YYYY-MM-DD' portion
+    }
+
+    const bestDayRaw = normalizeDateString(bestDay.date);
+
     // Create Vegas forecast rows (highlight best day)
     const vegasRows = vegasForecast.slice(1, 8).map(d => {
-        let highlightClass = (d.date === bestDay.date) ? 'highlight-row' : '';
+        const forecastDayRaw = normalizeDateString(d.date);
+        let highlightClass = (forecastDayRaw === bestDayRaw) ? 'highlight-row' : '';
         let rainText = d.rain > 0 ? d.rain.toFixed(2) + " in rain" : "";
         let iconUrl = weatherIconUrl(d.icon);
         return `<tr class="${highlightClass}">
@@ -115,7 +123,8 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
 
     // Create MN forecast rows (highlight best day)
     const mnRows = minnesotaForecast.slice(1, 8).map(d => {
-        let highlightClass = (d.date === bestDay.date) ? 'highlight-row' : '';
+        const forecastDayRaw = normalizeDateString(d.date);
+        let highlightClass = (forecastDayRaw === bestDayRaw) ? 'highlight-row' : '';
         let snowText = d.snow > 0 ? d.snow.toFixed(2) + " in snow" : "";
         let iconUrl = weatherIconUrl(d.icon);
         let wc = dailyWindchill(d.temp, d.wind_speed).toFixed(1) + "°F";
@@ -298,4 +307,4 @@ function dailyWindchill(tempF, windMph) {
 function formatForecastDate(dateStr) {
     const d = new Date(dateStr);
     return d.toLocaleDateString('en-US');
-} 
+}
