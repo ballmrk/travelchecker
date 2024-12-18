@@ -155,8 +155,7 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
         results.innerHTML = `
             <h2>Details for Best Day: ${formattedDate}</h2>
             <p><strong>Flight Price:</strong> ${flightPrice !== null ? '$' + flightPrice : 'No flights found'}<br>
-            <a href="${flightLink}" target="_blank">Check Flights for ${formattedDate}</a></p>
-
+<a href="${flightLink}" class="flight-button" target="_blank">Check Flights for ${formattedDate}</a>
             ${flightInfoHTML}
             ${alternativesHTML}
 
@@ -299,4 +298,4 @@ function dailyWindchill(tempF, windMph) {
 function formatForecastDate(dateStr) {
     const d = new Date(dateStr);
     return d.toLocaleDateString('en-US');
-}
+} 

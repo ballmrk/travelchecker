@@ -55,6 +55,20 @@ header .subtitle {
     margin-bottom: 20px;
 }
 
+.card h2 {
+    font-size: 1.4em;
+    font-weight: 700;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+
+.card h3 {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
 #alert-messages {
     text-align: center;
     margin-bottom: 20px;
@@ -95,12 +109,17 @@ th {
 
 .weather-icon {
     vertical-align: middle;
-    width: 25px;
-    height: 25px;
+    width: 30px;
+    height: 30px;
 }
 
 .highlight-row {
     background-color: #fff9c4; /* Light yellow highlight */
+    border-left: 4px solid #fbc02d;
+}
+
+.highlight-row td {
+    font-weight: bold;
 }
 
 #gauge_div {
@@ -149,6 +168,22 @@ th {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Flight Button */
+.flight-button {
+    display: inline-block;
+    padding: 8px 12px;
+    background: #1e88e5;
+    color: #fff;
+    border-radius: 5px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: 500;
+}
+
+.flight-button:hover {
+    background: #1565c0;
 }
 
 /* Responsive Adjustments */
