@@ -1,46 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Handle subscription form submit
-    const subscribeForm = document.getElementById('subscribe-form');
-    if (subscribeForm) {
-        subscribeForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const emailInput = document.getElementById('email-input');
-            const email = emailInput.value.trim();
-            const subscribeMessage = document.getElementById('subscribe-message');
-
-            if (!email) {
-                subscribeMessage.textContent = "Please enter a valid email.";
-                subscribeMessage.style.color = 'red';
-                return;
-            }
-
-            const backendUrl = 'https://polar-ocean-34033-d5a9931b2079.herokuapp.com'; // Your Heroku backend
-
-            try {
-                const response = await fetch(`${backendUrl}/api/subscribe`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    subscribeMessage.textContent = "Error: " + (errorData.error || "Failed to subscribe.");
-                    subscribeMessage.style.color = 'red';
-                } else {
-                    const result = await response.json();
-                    subscribeMessage.textContent = result.message || "Subscribed successfully!";
-                    subscribeMessage.style.color = 'green';
-                    emailInput.value = '';
-                }
-            } catch (err) {
-                console.error("Error subscribing:", err);
-                subscribeMessage.textContent = "An error occurred. Please try again later.";
-                subscribeMessage.style.color = 'red';
-            }
-        });
-    }
-
+    // Fetch data when DOM is ready
     fetchDataAndUpdateUI();
 });
 
@@ -79,10 +38,17 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
     const { score, flightPrice, flightDetails, alternativeFlights, breakdown } = bestDay;
     const chosenDate = bestDay.date;
 
-    // UPDATED: Set the best-day-date element to highlight chosen day
+    // Format the chosenDate into a more Americanized format
+    const dateObj = new Date(chosenDate);
+    const formattedDate = dateObj.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
     const bestDayDateElem = document.getElementById('best-day-date');
     if (bestDayDateElem) {
-        bestDayDateElem.textContent = chosenDate;
+        bestDayDateElem.textContent = formattedDate;
     }
 
     // Alerts if any
@@ -102,14 +68,13 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
         }
     }
 
-    // UPDATED: Friendlier Score Breakdown
+    // Friendlier Score Breakdown
     const breakdownList = document.getElementById('breakdown-list');
     if (breakdownList) {
         let breakdownHTML = '';
 
-        // Always show Airfare Value, even if zero, since it's a key factor
+        // Always show Airfare Value, even if zero
         breakdownHTML += `<li><strong>Airfare Value:</strong> ${breakdown.flightPoints.toFixed(2)} – Higher means cheaper, better flight deals.</li>`;
-
         if (breakdown.coldPoints !== 0) {
             breakdownHTML += `<li><strong>MN Cold Weather Bonus:</strong> ${breakdown.coldPoints.toFixed(2)} – Added if it’s cold in Minnesota, making a warm Vegas getaway more appealing.</li>`;
         }
@@ -132,67 +97,65 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
         breakdownList.innerHTML = breakdownHTML;
     }
 
+    const results = document.getElementById('results');
+    let flightLink = `https://www.google.com/travel/flights?q=Flights%20from%20MSP%20to%20LAS%20on%20${encodeURIComponent(chosenDate)}`;
 
-const results = document.getElementById('results');
-let flightLink = `https://www.google.com/travel/flights?q=Flights%20from%20MSP%20to%20LAS%20on%20${encodeURIComponent(chosenDate)}`;
+    // Create Vegas forecast rows
+    const vegasRows = vegasForecast.slice(1, 8).map(d => {
+        let highlightClass = d.date === chosenDate ? 'highlight-row' : '';
+        let rainText = d.rain > 0 ? d.rain.toFixed(2) + " in rain" : "";
+        let iconUrl = weatherIconUrl(d.icon);
+        return `<tr class="${highlightClass}">
+                <td>${formatForecastDate(d.date)}</td>
+                <td>${d.temp.toFixed(1)}°F</td>
+                <td><img class="weather-icon" src="${iconUrl}" alt="${d.condition}"> ${d.condition}</td>
+                <td>${rainText}</td>
+            </tr>`;
+    }).join('');
 
-// Create Vegas forecast rows
-const vegasRows = vegasForecast.slice(1, 8).map(d => {
-    let highlightClass = d.date === chosenDate ? 'highlight-row' : '';
-    let rainText = d.rain > 0 ? d.rain.toFixed(2) + " in rain" : "";
-    let iconUrl = weatherIconUrl(d.icon);
-    return `<tr class="${highlightClass}">
-            <td>${d.date}</td>
-            <td>${d.temp.toFixed(1)}°F</td>
-            <td><img class="weather-icon" src="${iconUrl}" alt="${d.condition}"> ${d.condition}</td>
-            <td>${rainText}</td>
-        </tr>`;
-}).join('');
+    // Create MN forecast rows
+    const mnRows = minnesotaForecast.slice(1, 8).map(d => {
+        let highlightClass = d.date === chosenDate ? 'highlight-row' : '';
+        let snowText = d.snow > 0 ? d.snow.toFixed(2) + " in snow" : "";
+        let iconUrl = weatherIconUrl(d.icon);
+        let wc = dailyWindchill(d.temp, d.wind_speed).toFixed(1) + "°F";
+        return `<tr class="${highlightClass}">
+                <td>${formatForecastDate(d.date)}</td>
+                <td>${d.temp.toFixed(1)}°F</td>
+                <td><img class="weather-icon" src="${iconUrl}" alt="${d.condition}"> ${d.condition}</td>
+                <td>${snowText}</td>
+                <td>${wc}</td>
+            </tr>`;
+    }).join('');
 
-// Create MN forecast rows
-const mnRows = minnesotaForecast.slice(1, 8).map(d => {
-    let highlightClass = d.date === chosenDate ? 'highlight-row' : '';
-    let snowText = d.snow > 0 ? d.snow.toFixed(2) + " in snow" : "";
-    let iconUrl = weatherIconUrl(d.icon);
-    let wc = dailyWindchill(d.temp, d.wind_speed).toFixed(1) + "°F";
-    return `<tr class="${highlightClass}">
-            <td>${d.date}</td>
-            <td>${d.temp.toFixed(1)}°F</td>
-            <td><img class="weather-icon" src="${iconUrl}" alt="${d.condition}"> ${d.condition}</td>
-            <td>${snowText}</td>
-            <td>${wc}</td>
-        </tr>`;
-}).join('');
+    let flightInfoHTML = "";
+    if (flightDetails) {
+        // More conversational flight info
+        flightInfoHTML = `
+                <p><strong>Selected One-Way Flight:</strong></p>
+                <ul>
+                  <li><strong>Airline:</strong> ${flightDetails.carrier}</li>
+                  <li><strong>Flight #:</strong> ${flightDetails.flightNumber}</li>
+                  <li><strong>Departs:</strong> ${flightDetails.departureTime}</li>
+                  <li><strong>Arrives:</strong> ${flightDetails.arrivalTime}</li>
+                </ul>
+            `;
+    }
 
-let flightInfoHTML = "";
-if (flightDetails) {
-    // UPDATED: More conversational flight info
-    flightInfoHTML = `
-            <p><strong>Selected One-Way Flight:</strong></p>
-            <ul>
-              <li><strong>Airline:</strong> ${flightDetails.carrier}</li>
-              <li><strong>Flight #:</strong> ${flightDetails.flightNumber}</li>
-              <li><strong>Departs:</strong> ${flightDetails.departureTime}</li>
-              <li><strong>Arrives:</strong> ${flightDetails.arrivalTime}</li>
-            </ul>
-        `;
-}
+    let alternativesHTML = "";
+    if (alternativeFlights && alternativeFlights.length > 0) {
+        alternativesHTML = `<h4>Alternative Flight Options:</h4><ul>`;
+        alternativeFlights.forEach(alt => {
+            alternativesHTML += `<li>$${alt.price} - ${alt.carrier}, Flight #${alt.flightNumber}, Departs ${alt.departureTime}, Arrives ${alt.arrivalTime}</li>`;
+        });
+        alternativesHTML += `</ul>`;
+    }
 
-let alternativesHTML = "";
-if (alternativeFlights && alternativeFlights.length > 0) {
-    alternativesHTML = `<h4>Alternative Flight Options:</h4><ul>`;
-    alternativeFlights.forEach(alt => {
-        alternativesHTML += `<li>$${alt.price} - ${alt.carrier}, Flight #${alt.flightNumber}, Departs ${alt.departureTime}, Arrives ${alt.arrivalTime}</li>`;
-    });
-    alternativesHTML += `</ul>`;
-}
-
-// UPDATED: More friendly explanation
-if (results) {
-    results.innerHTML = `
-            <h2>Details for Best Day: ${chosenDate}</h2>
+    if (results) {
+        results.innerHTML = `
+            <h2>Details for Best Day: ${formattedDate}</h2>
             <p><strong>Flight Price:</strong> ${flightPrice !== null ? '$' + flightPrice : 'No flights found'}<br>
-            <a href="${flightLink}" target="_blank">Check Flights for ${chosenDate}</a></p>
+            <a href="${flightLink}" target="_blank">Check Flights for ${formattedDate}</a></p>
 
             ${flightInfoHTML}
             ${alternativesHTML}
@@ -203,18 +166,27 @@ if (results) {
             ${vegasRows}
             </table>
 
-            <h3>Minneapolis 7-Day Forecast </h3>
+            <h3>Minneapolis 7-Day Forecast</h3>
             <table>
             <tr><th>Date</th><th>Temp</th><th>Condition</th><th>Snow</th><th>Windchill</th></tr>
             ${mnRows}
             </table>
             <p><em>Currently showing the best day within the next 7 days.</em></p>
-        `;
-}
 
-// Load gauge and draw
-google.charts.load('current', { 'packages': ['gauge'] });
-google.charts.setOnLoadCallback(() => drawGauge(score));
+            <h3>What Does a Perfect (100) Score Day Look Like?</h3>
+            <p>A perfect score might look like:</p>
+            <ul>
+              <li>Flight Price: $150 (low enough to earn maximum flight points)</li>
+              <li>Vegas Weather: A comfortable 75°F and sunny</li>
+              <li>Minnesota Weather: Extremely cold (e.g., 0°F) with snow on the way</li>
+              <li>Leaving just before a severe weather event hits Minnesota</li>
+            </ul>
+        `;
+    }
+
+    // Load gauge and draw
+    google.charts.load('current', { 'packages': ['gauge'] });
+    google.charts.setOnLoadCallback(() => drawGauge(score));
 }
 
 function drawGauge(score) {
@@ -255,13 +227,9 @@ function drawMultiDayChart(dayScores) {
             legend: { position: 'bottom' },
             width: 550,
             height: 400,
-            // Ensure points are visible
             pointsVisible: true,
-            // Set the size of the points
             pointSize: 7,
-            // Optional: Make the line a bit thicker
             lineWidth: 2,
-            // Specify the shape of the points via the series option
             series: {
                 0: { pointShape: 'square' }
             }
@@ -282,9 +250,8 @@ function drawMultiDayChart(dayScores) {
 
 function showDayBreakdown(dayInfo) {
     const breakdown = dayInfo.breakdown;
-    // UPDATED: Friendlier breakdown labels here as well
     let breakdownHTML = `
-        <h2>Score Breakdown for ${dayInfo.date}</h2>
+        <h2>Score Breakdown for ${formatForecastDate(dayInfo.date)}</h2>
         <ul>
             <li><strong>Airfare Value:</strong> ${breakdown.flightPoints.toFixed(2)}</li>
             <li><strong>MN Cold Weather Penalty:</strong> ${breakdown.coldPoints.toFixed(2)}</li>
@@ -326,4 +293,14 @@ function dailyWindchill(tempF, windMph) {
     } else {
         return tempF;
     }
+}
+
+// Helper function to format dates from the forecast arrays
+function formatForecastDate(dateStr) {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
 }
