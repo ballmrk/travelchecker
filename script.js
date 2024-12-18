@@ -36,9 +36,9 @@ async function fetchDataAndUpdateUI() {
 
 function displayScore(bestDay, vegasForecast, minnesotaForecast) {
     const { score, flightPrice, flightDetails, alternativeFlights, breakdown } = bestDay;
-    const chosenDate = bestDay.date;
+    const chosenDate = bestDay.date; // raw date (e.g. "2024-01-15") for comparisons
 
-    // Format the chosenDate into a more Americanized format
+    // Format the chosenDate into a more Americanized format (e.g., "January 15, 2024")
     const dateObj = new Date(chosenDate);
     const formattedDate = dateObj.toLocaleDateString('en-US', {
         year: 'numeric',
@@ -73,7 +73,7 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
     if (breakdownList) {
         let breakdownHTML = '';
 
-        // Always show Airfare Value, even if zero
+        // Always show Airfare Value
         breakdownHTML += `<li><strong>Airfare Value:</strong> ${breakdown.flightPoints.toFixed(2)} – Higher means cheaper, better flight deals.</li>`;
         if (breakdown.coldPoints !== 0) {
             breakdownHTML += `<li><strong>MN Cold Weather Bonus:</strong> ${breakdown.coldPoints.toFixed(2)} – Added if it’s cold in Minnesota, making a warm Vegas getaway more appealing.</li>`;
@@ -100,9 +100,9 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
     const results = document.getElementById('results');
     let flightLink = `https://www.google.com/travel/flights?q=Flights%20from%20MSP%20to%20LAS%20on%20${encodeURIComponent(chosenDate)}`;
 
-    // Create Vegas forecast rows
+    // Create Vegas forecast rows (highlight best day)
     const vegasRows = vegasForecast.slice(1, 8).map(d => {
-        let highlightClass = d.date === chosenDate ? 'highlight-row' : '';
+        let highlightClass = (d.date === bestDay.date) ? 'highlight-row' : '';
         let rainText = d.rain > 0 ? d.rain.toFixed(2) + " in rain" : "";
         let iconUrl = weatherIconUrl(d.icon);
         return `<tr class="${highlightClass}">
@@ -113,9 +113,9 @@ function displayScore(bestDay, vegasForecast, minnesotaForecast) {
             </tr>`;
     }).join('');
 
-    // Create MN forecast rows
+    // Create MN forecast rows (highlight best day)
     const mnRows = minnesotaForecast.slice(1, 8).map(d => {
-        let highlightClass = d.date === chosenDate ? 'highlight-row' : '';
+        let highlightClass = (d.date === bestDay.date) ? 'highlight-row' : '';
         let snowText = d.snow > 0 ? d.snow.toFixed(2) + " in snow" : "";
         let iconUrl = weatherIconUrl(d.icon);
         let wc = dailyWindchill(d.temp, d.wind_speed).toFixed(1) + "°F";
@@ -295,12 +295,8 @@ function dailyWindchill(tempF, windMph) {
     }
 }
 
-// Helper function to format dates from the forecast arrays
+// Helper function to format dates from the forecast arrays to MM/DD/YYYY
 function formatForecastDate(dateStr) {
     const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-    });
+    return d.toLocaleDateString('en-US');
 }
